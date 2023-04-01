@@ -1,0 +1,6 @@
+/awful_wm
+.vscode/
+*.out
+bin/
+obj/
+.vs/
