@@ -117,7 +117,9 @@ namespace CursedWM
                         // open WMenu
                         var wmenu = new WMenu();
                         wmenu.AddItem("Close", () => {
-                            Xlib.XKillClient(display, window.Key);
+                            Xlib.XDestroyWindow(display, window.Key);
+                            Xlib.XFlush(display);
+                            RemoveWindow(window.Key);
                         });
 
                         wmenu.Show(display, root);

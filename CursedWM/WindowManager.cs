@@ -338,12 +338,14 @@ namespace CursedWM
             Xlib.XGetWindowAttributes(this.display, frame, out var attr);
 
             var menu = new WMenu();
-            menu.AddItem("Close", () => { Xlib.XKillClient(this.display, child); });
-            //menu.AddItem("Maximize", () => { MaximizeWindow(child); });
-            //menu.AddItem("Minimize", () => { MinimizeWindow(child); });
-            //menu.AddItem("Restore", () => { RestoreWindow(child); });
-            //menu.AddItem("Move", () => { MoveWindow(child); });
-            //menu.AddItem("Resize", () => { ResizeWindow(child); });
+            menu.AddItem("Close", () => { 
+                Xlib.XUnmapWindow(this.display, child);
+                Xlib.XDestroyWindow(this.display, child);
+                Xlib.XDestroyWindow(this.display, frame);
+                Xlib.XDestroyWindow(this.display, title);
+                Xlib.XDestroyWindow(this.display, ev.window);
+                Switcher.RemoveWindow(child);
+            });
 
             menu.Show(this.display, this.root);
 
