@@ -1,5 +1,7 @@
 # CursedWM (Working title)
 
+![image](https://user-images.githubusercontent.com/50080567/229363470-756951d7-16b3-4796-87e7-16bc4e5c71ac.png)
+
 An X11 Window Manager built in C#. Yes, really. Sorry.
 
 Based on existing work from https://github.com/ajnewlands/cswm.
