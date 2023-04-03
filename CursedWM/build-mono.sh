@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Configuration=Debug; export Configuration
+Configuration=Release; export Configuration
 
 rm -rf bin/$Configuration/mono obj/$Configuration/mono
 mkdir -p bin/$Configuration/mono
