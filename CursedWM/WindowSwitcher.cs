@@ -98,6 +98,7 @@ namespace CursedWM
 
         public void OnButtonPress(XButtonEvent e)
         {
+            Dictionary<Window, bool> NeedToCloseWindow = new Dictionary<Window, bool>();
             if (e.button == (int)Button.LEFT)
             {
                 foreach (var window in WindowRefs)
@@ -109,22 +110,29 @@ namespace CursedWM
                         Xlib.XFlush(display);
                     }
                 }
-            } else if (e.button == (int)Button.RIGHT) {
+            }
+            else if (e.button == (int)Button.RIGHT)
+            {
                 foreach (var window in WindowRefs)
                 {
                     if (window.Value == e.window)
                     {
                         // open WMenu
                         var wmenu = new WMenu();
-                        wmenu.AddItem("Close", () => {
+                        wmenu.AddItem("Close", () =>
+                        {
                             Xlib.XDestroyWindow(display, window.Key);
                             Xlib.XFlush(display);
-                            RemoveWindow(window.Key);
+                            //RemoveWindow(window.Key);
+                            NeedToCloseWindow[window.Key] = true;
                         });
 
                         wmenu.Show(display, root);
                     }
                 }
+            }
+            foreach (var window in NeedToCloseWindow.Keys) {
+                RemoveWindow(window);
             }
         }
     }

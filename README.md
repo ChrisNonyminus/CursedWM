@@ -40,7 +40,7 @@ Right now the WM is barebones and has few features.
 
 # Tested Platforms and Runtimes
 
-- Linux/amd64 - .NET 7 JIT build works, .NET 7 AOT build works, mono JIT build works.
+- Linux/amd64 - .NET 7 JIT build works, .NET 7 AOT build works, mono JIT and AOT build seem to work.
 
 # Compiling
 
