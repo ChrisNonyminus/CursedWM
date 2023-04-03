@@ -46,7 +46,7 @@ AOT compilation with .NET 7 works.
 
 # Running
 
-If running via Xephyr, just do ``DISPLAY:=<xephyr display number> dotnet run --project CursedWM.csproj`` if you're running the .NET 7 build., or ``DISPLAY:=<xephyr display number> <path to compiled mxe>`` if you're running the mono build.
+If running via Xephyr, just do ``DISPLAY:=<xephyr display number> dotnet run --project CursedWM.csproj`` if you're running the .NET 7 build., or ``DISPLAY:=<xephyr display number> <path to compiled exe>`` if you're running the mono build.
 
 
 
