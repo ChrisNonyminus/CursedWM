@@ -38,6 +38,10 @@ Right now the WM is barebones and has few features.
 
 - Xephyr or something similar.
 
+# Tested Platforms and Runtimes
+
+- Linux/amd64 - .NET 7 JIT build works, .NET 7 AOT build works, mono JIT build works.
+
 # Compiling
 
 There are two methods to compile this. One is to compile the WM as a .NET 7 application, by ``cd``ing into ``./CursedWM`` and running ``dotnet build --project CursedWM.csproj``. The other method is to build with mono. Simply, assuming you have mono, ``cd`` into ``CursedWM``, and run ``build-mono.sh``.
