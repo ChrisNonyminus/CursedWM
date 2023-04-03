@@ -26,7 +26,7 @@ Right now the WM is barebones and has few features.
 
 ## Nuget
 
-- X11 bindings (see cswm github repo)
+- X11 bindings (see cswm github repo; nuget package and nuget itself not needed if compiling mono build)
 
 ## System libraries
 
