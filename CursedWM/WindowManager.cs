@@ -7,50 +7,6 @@ using X11;
 
 namespace CursedWM
 {
-    public class SimpleLogger
-    {
-        public enum LogLevel
-        {
-            Debug,
-            Info,
-            Warn,
-            Error,
-        }
-
-        public LogLevel Level;
-
-        public SimpleLogger(LogLevel level)
-        {
-            this.Level = level;
-        }
-
-        private void Write(string message, LogLevel message_level)
-        {
-            if (Level <= message_level)
-                Console.WriteLine($"{DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss tt")} {message_level} {message}");
-
-        }
-
-        public void Debug(string message)
-        {
-            Write(message, LogLevel.Debug);
-        }
-
-        public void Info(string message)
-        {
-            Write(message, LogLevel.Info);
-        }
-
-        public void Warn(string message)
-        {
-            Write(message, LogLevel.Warn);
-        }
-
-        public void Error(string message)
-        {
-            Write(message, LogLevel.Error);
-        }
-    }
 
     public class WindowGroup
     {
@@ -110,9 +66,10 @@ namespace CursedWM
         }
     }
 
-    public class WindowManager
+    public partial class WindowManager
     {
         private SimpleLogger Log;
+        public XErrorHandlerDelegate OnError;
         private IntPtr display;
         private Window root;
         private WMCursors Cursors = new WMCursors();
@@ -123,24 +80,7 @@ namespace CursedWM
         private readonly Dictionary<Window, WindowGroup> WindowIndexByWMenuButt = new Dictionary<Window, WindowGroup>();
         private MouseMovement MouseMovement;
 
-        public XErrorHandlerDelegate OnError;
 
-        public int ErrorHandler(IntPtr display, ref XErrorEvent ev)
-        {
-            if (ev.error_code == 10) // BadAccess, i.e. another window manager has already claimed those privileges.
-            {
-                Log.Error("X11 denied access to window manager resources - another window manager is already running");
-                Environment.Exit(1);
-            }
-
-            // Other runtime errors and warnings.
-            var description = Marshal.AllocHGlobal(1024);
-            Xlib.XGetErrorText(this.display, ev.error_code, description, 1024);
-            var desc = Marshal.PtrToStringAnsi(description);
-            Log.Warn($"X11 Error: {desc}");
-            Marshal.FreeHGlobal(description);
-            return 0;
-        }
 
         public WindowManager(SimpleLogger.LogLevel level)
         {
