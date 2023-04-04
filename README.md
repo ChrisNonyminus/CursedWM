@@ -31,7 +31,7 @@ Right now the WM is barebones and has few features.
 ## System libraries
 
 - .NET 7 if running a .NET 7 build.
-- Mono if running a mono build.
+- Mono 6.x if running a mono build.
 - X11
 
 ## Testing
