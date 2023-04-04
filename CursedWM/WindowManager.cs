@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
@@ -405,6 +406,37 @@ namespace CursedWM
             {
                 LeftDragFrame(ev);
                 return;
+            }
+        }
+
+        Process ExecuteCommand(string command) {
+            // I hope this works in linux
+            ProcessStartInfo psi;
+            Process p;
+            psi = new ProcessStartInfo(command);
+            psi.CreateNoWindow = true;
+            psi.UseShellExecute = true;
+            p = Process.Start(psi);
+            return p;
+        }
+
+        public struct XrandrDisplay 
+        {
+            public string Name;
+            public bool On;
+            public int Width;
+            public int Height;
+            public int RR;
+        }
+
+        void Xrandr_ToggleDisplay(XrandrDisplay[] displays) {
+            string invocation = $"xrandr";
+            foreach (var disp in displays) {
+                invocation += $" --output {disp.Name} {(disp.On ? "" : "--off")} --mode {disp.Width}x{disp.Height} --rate {disp.RR}";
+            }
+            if (ExecuteCommand(invocation).ExitCode != 0)
+            {
+                Log.Error($"Something went wrong invoking \"{invocation}\"");
             }
         }
 
