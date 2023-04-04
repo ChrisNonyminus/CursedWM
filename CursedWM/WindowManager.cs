@@ -132,6 +132,10 @@ namespace CursedWM
 
             Xlib.XSetWindowBackground(this.display, this.root, this.Colours.DesktopBackground);
             Xlib.XClearWindow(this.display, this.root); // force a redraw with the new background color
+
+            Xlib.XGrabButton(this.display, Button.RIGHT, KeyButtonMask.AnyModifier, this.root, false,
+                            EventMask.ButtonPressMask, GrabMode.Async, GrabMode.Async, 0, 0);
+
         }
 
         private ulong GetPixelByName(string name)
@@ -244,7 +248,11 @@ namespace CursedWM
         private void OnButtonPressEvent(X11.XButtonEvent ev)
         {
             var client = ev.window;
-            if (WindowIndexByClient.ContainsKey(ev.window) && ev.button == (uint)Button.LEFT)
+            if (ev.window == root && ev.button == (uint)Button.RIGHT) 
+            {
+                OpenDesktopMenu(ev);
+            }
+            else if (WindowIndexByClient.ContainsKey(ev.window) && ev.button == (uint)Button.LEFT)
             {
                 LeftClickClientWindow(ev);
             }
@@ -262,14 +270,14 @@ namespace CursedWM
             }
             if (WindowIndexByWMenuButt.ContainsKey(ev.window) && ev.button == (uint)Button.LEFT)
             {
-                OpenWMenu(ev);
+                OpenAppWindowMenu(ev);
             }
             else FocusAndRaiseWindow(client);
 
             Switcher.OnButtonPress(ev);
         }
 
-        private void OpenWMenu(XButtonEvent ev)
+        private void OpenAppWindowMenu(XButtonEvent ev)
         {
             var wg = WindowIndexByWMenuButt[ev.window];
             var frame = wg.frame;
@@ -293,6 +301,45 @@ namespace CursedWM
 
 
 
+        }
+
+        void OpenDesktopMenu(XButtonEvent ev) {
+            // note: ev.window is assumed to be root
+            if (ev.window != root) {
+                Log.Warn("This shouldn't happen");
+            }
+
+
+            Xlib.XGetWindowAttributes(this.display, root, out XWindowAttributes attr);
+            var menu = new WMenu();
+            menu.AddItem("DEBUG: 1024x768 res", () => {
+                XrandrDisplay[] displays = new XrandrDisplay[] {
+                    new XrandrDisplay() 
+                    {
+                        Name = "default",
+                        On = true,
+                        Width = 1024,
+                        Height = 768,
+                        RR = 0
+                    }
+                };
+                Xrandr_ToggleDisplay(displays);
+            });
+            menu.AddItem("DEBUG: 1280x720 res", () => {
+                XrandrDisplay[] displays = new XrandrDisplay[] {
+                    new XrandrDisplay() 
+                    {
+                        Name = "default",
+                        On = true,
+                        Width = 1280,
+                        Height = 720,
+                        RR = 0
+                    }
+                };
+                Xrandr_ToggleDisplay(displays);
+            });
+
+            menu.Show(this.display, this.root);
         }
 
         private void LeftClickTitleBar(XButtonEvent ev)
@@ -409,11 +456,11 @@ namespace CursedWM
             }
         }
 
-        Process ExecuteCommand(string command) {
+        Process ExecuteCommand(string command, string args) {
             // I hope this works in linux
             ProcessStartInfo psi;
             Process p;
-            psi = new ProcessStartInfo(command);
+            psi = new ProcessStartInfo(command, args);
             psi.CreateNoWindow = true;
             psi.UseShellExecute = true;
             p = Process.Start(psi);
@@ -430,13 +477,15 @@ namespace CursedWM
         }
 
         void Xrandr_ToggleDisplay(XrandrDisplay[] displays) {
-            string invocation = $"xrandr";
+            string invocation = $"";
             foreach (var disp in displays) {
-                invocation += $" --output {disp.Name} {(disp.On ? "" : "--off")} --mode {disp.Width}x{disp.Height} --rate {disp.RR}";
+                invocation += $" --output {disp.Name} {(disp.On ? "" : "--off")} --mode {disp.Width}x{disp.Height} {((disp.RR != 0) ? ($"--rate {disp.RR}") : (""))}";
             }
-            if (ExecuteCommand(invocation).ExitCode != 0)
+            var p = ExecuteCommand("/usr/bin/xrandr", invocation);
+            p.WaitForExit();
+            if (p.ExitCode != 0)
             {
-                Log.Error($"Something went wrong invoking \"{invocation}\"");
+                Log.Error($"Something went wrong invoking \"/usr/bin/xrandr {invocation}\"");
             }
         }
 
