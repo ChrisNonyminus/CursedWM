@@ -163,7 +163,7 @@ namespace CursedWM
             Xlib.XFetchName(this.display, child, ref Name);
             Log.Debug($"Framing {Name}");
 
-            Xlib.XGetWindowAttributes(this.display, child, out var attr);
+            Xlib.XGetWindowAttributes(this.display, child, out XWindowAttributes attr);
             var title = Xlib.XCreateSimpleWindow(this.display, this.root, attr.x, attr.y, attr.width - (2 * inner_border),
                 (title_height - 2 * inner_border), inner_border, this.Colours.InactiveTitleColor, this.Colours.InactiveTitleBorder);
 
@@ -275,7 +275,7 @@ namespace CursedWM
             var child = wg.child;
             var title = wg.title;
 
-            Xlib.XGetWindowAttributes(this.display, frame, out var attr);
+            Xlib.XGetWindowAttributes(this.display, frame, out XWindowAttributes attr);
 
             var menu = new WMenu();
             menu.AddItem("Close", () => { 
@@ -302,14 +302,14 @@ namespace CursedWM
             frame = wg.frame;
             var child = wg.child;
             FocusAndRaiseWindow(child);
-            Xlib.XGetWindowAttributes(this.display, frame, out var attr);
+            Xlib.XGetWindowAttributes(this.display, frame, out XWindowAttributes attr);
             this.MouseMovement = new MouseMovement(MouseMoveType.TitleDrag, ev.x_root, ev.y_root, attr.x, attr.y);
             return;
         }
 
         private void LeftClickFrame(XButtonEvent ev)
         {
-            Xlib.XGetWindowAttributes(this.display, ev.window, out var attr);
+            Xlib.XGetWindowAttributes(this.display, ev.window, out XWindowAttributes attr);
 
             var control_width = (attr.width / 2) <= 40 ? attr.width / 2 : 40;
             var control_height = (attr.height / 2) <= 40 ? attr.width / 2 : 40;
@@ -414,7 +414,7 @@ namespace CursedWM
                 return;
 
             // If we hit the screen edges, snap to edge
-            Xlib.XGetWindowAttributes(this.display, this.root, out var attr);
+            Xlib.XGetWindowAttributes(this.display, this.root, out XWindowAttributes attr);
             if (ev.y_root == attr.height - 1 // Snap to bottom
                 || ev.y_root == 0 // snap to top
                 || ev.x_root == attr.width - 1 // snap to right
@@ -439,9 +439,9 @@ namespace CursedWM
             var title = this.WindowIndexByFrame[frame].title;
             var client = this.WindowIndexByFrame[frame].child;
 
-            Xlib.XGetWindowAttributes(this.display, title, out var t_attr);
+            Xlib.XGetWindowAttributes(this.display, title, out XWindowAttributes t_attr);
             var t_h = t_attr.height;
-            Xlib.XGetWindowAttributes(this.display, frame, out var f_attr);
+            Xlib.XGetWindowAttributes(this.display, frame, out XWindowAttributes f_attr);
             var border_w = (uint)f_attr.border_width;
             int f_y = 0, f_x = 0;
 
@@ -520,7 +520,7 @@ namespace CursedWM
             }
 
             //// Resize and move the frame
-            Xlib.XGetWindowAttributes(this.display, frame, out var attr);
+            Xlib.XGetWindowAttributes(this.display, frame, out XWindowAttributes attr);
             var new_width = (uint)(attr.width + w_delta);
             var new_height = (uint)(attr.height + h_delta);
             Xlib.XMoveResizeWindow(this.display, frame, attr.x + x_delta, attr.y + y_delta, new_width, new_height);

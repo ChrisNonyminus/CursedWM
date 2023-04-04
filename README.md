@@ -44,7 +44,7 @@ Right now the WM is barebones and has few features.
 
 # Compiling
 
-There are two methods to compile this. One is to compile the WM as a .NET 7 application, by ``cd``ing into ``./CursedWM`` and running ``dotnet build --project CursedWM.csproj``. The other method is to build with mono. Simply, assuming you have mono, ``cd`` into ``CursedWM``, and run ``build-mono.sh``.
+There are two methods to compile this. One is to compile the WM as a .NET 7 application, by ``cd``ing into ``./CursedWM`` and running ``dotnet build --project CursedWM.csproj``. The other method is to build with mono. Simply, assuming you have mono, ``cd`` into ``CursedWM``, and run ``build-mono.sh <Configuration (Release/Debug)>``.
 
 AOT compilation with .NET 7 works.
 
