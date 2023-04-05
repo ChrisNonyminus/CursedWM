@@ -489,3 +489,8 @@ void WindowManager_LeftClickTitleBar(WindowManager* wm, XButtonEvent ev) {
   XGetWindowAttributes(wm->display, frame, &attr);
   MouseMovement_init(&wm->mouseMovement, MouseMoveType_TitleDrag, ev.x_root, ev.y_root, attr.x, attr.y);
 }
+
+void WindowManager_LeftClickFrame(WindowManager* wm, XButtonEvent ev) {
+  XWindowAttributes attr;
+  XGetWindowAttributes
+}

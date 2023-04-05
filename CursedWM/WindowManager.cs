@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using X11;
 
 namespace CursedWM
@@ -248,7 +249,7 @@ namespace CursedWM
         private void OnButtonPressEvent(X11.XButtonEvent ev)
         {
             var client = ev.window;
-            if (ev.window == root && ev.button == (uint)Button.RIGHT) 
+            if (ev.window == root && ev.button == (uint)Button.RIGHT)
             {
                 OpenDesktopMenu(ev);
             }
@@ -287,7 +288,8 @@ namespace CursedWM
             Xlib.XGetWindowAttributes(this.display, frame, out XWindowAttributes attr);
 
             var menu = new WMenu();
-            menu.AddItem("Close", () => { 
+            menu.AddItem("Close", () =>
+            {
                 Xlib.XUnmapWindow(this.display, child);
                 Xlib.XDestroyWindow(this.display, child);
                 Xlib.XDestroyWindow(this.display, frame);
@@ -303,18 +305,22 @@ namespace CursedWM
 
         }
 
-        void OpenDesktopMenu(XButtonEvent ev) {
+        void OpenDesktopMenu(XButtonEvent ev)
+        {
             // note: ev.window is assumed to be root
-            if (ev.window != root) {
+            if (ev.window != root)
+            {
                 Log.Warn("This shouldn't happen");
             }
 
 
             Xlib.XGetWindowAttributes(this.display, root, out XWindowAttributes attr);
             var menu = new WMenu();
-            menu.AddItem("DEBUG: 1024x768 res", () => {
+            // DEBUG: 
+            menu.AddItem("1024x768 res", () =>
+            {
                 XrandrDisplay[] displays = new XrandrDisplay[] {
-                    new XrandrDisplay() 
+                    new XrandrDisplay()
                     {
                         Name = "default",
                         On = true,
@@ -325,9 +331,11 @@ namespace CursedWM
                 };
                 Xrandr_ToggleDisplay(displays);
             });
-            menu.AddItem("DEBUG: 1280x720 res", () => {
+            // DEBUG: 
+            menu.AddItem("1280x720 res", () =>
+            {
                 XrandrDisplay[] displays = new XrandrDisplay[] {
-                    new XrandrDisplay() 
+                    new XrandrDisplay()
                     {
                         Name = "default",
                         On = true,
@@ -336,6 +344,38 @@ namespace CursedWM
                         RR = 0
                     }
                 };
+                Xrandr_ToggleDisplay(displays);
+            });
+            // DEBUG: 
+            menu.AddItem("Print Displays", () =>
+            {
+                XrandrDisplay[] displays = Xrandr_GetDisplays();
+                foreach (var display in displays)
+                {
+                    Log.Info($"Display: {display.Name} {display.Width}x{display.Height} {display.RR}");
+                }
+            });
+            // DEBUG: 
+            menu.AddItem("All Displays Max Res" , () =>
+            {
+                XrandrDisplay[] displays = Xrandr_GetDisplays();
+                for (int i = 0; i < displays.Length; i++)
+                {
+                    var display = displays[i];
+                    display.On = true;
+                    foreach (var res in display.AvailableResolutions)
+                    {
+                        if (res.Item1 > display.Width)
+                        {
+                            display.Width = res.Item1;
+                        }
+                        if (res.Item2 > display.Height)
+                        {
+                            display.Height = res.Item2;
+                        }
+                    }
+                    displays[i] = display;
+                }
                 Xrandr_ToggleDisplay(displays);
             });
 
@@ -456,29 +496,36 @@ namespace CursedWM
             }
         }
 
-        Process ExecuteCommand(string command, string args) {
+        Process ExecuteCommand(string command, string args)
+        {
             // I hope this works in linux
             ProcessStartInfo psi;
             Process p;
             psi = new ProcessStartInfo(command, args);
             psi.CreateNoWindow = true;
-            psi.UseShellExecute = true;
+            psi.RedirectStandardOutput = true;
+            psi.UseShellExecute = false;
             p = Process.Start(psi);
             return p;
         }
 
-        public struct XrandrDisplay 
+        public struct XrandrDisplay
         {
             public string Name;
             public bool On;
             public int Width;
             public int Height;
             public int RR;
+
+            public (int, int)[] AvailableResolutions;
+            public int[] AvailableRRs;
         }
 
-        void Xrandr_ToggleDisplay(XrandrDisplay[] displays) {
+        void Xrandr_ToggleDisplay(XrandrDisplay[] displays)
+        {
             string invocation = $"";
-            foreach (var disp in displays) {
+            foreach (var disp in displays)
+            {
                 invocation += $" --output {disp.Name} {(disp.On ? "" : "--off")} --mode {disp.Width}x{disp.Height} {((disp.RR != 0) ? ($"--rate {disp.RR}") : (""))}";
             }
             var p = ExecuteCommand("/usr/bin/xrandr", invocation);
@@ -487,6 +534,75 @@ namespace CursedWM
             {
                 Log.Error($"Something went wrong invoking \"/usr/bin/xrandr {invocation}\"");
             }
+        }
+
+        XrandrDisplay[] Xrandr_GetDisplays()
+        {
+            var p = ExecuteCommand("/usr/bin/xrandr", "");
+            p.WaitForExit();
+            var stdout = p.StandardOutput.ReadToEnd();
+            var lines = stdout.Split('\n');
+            var displays = new List<XrandrDisplay>();
+            var current = new XrandrDisplay();
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("Screen"))
+                {
+                    continue;
+                }
+                if (line.StartsWith(" "))
+                {
+                    var _line = line.Trim();
+                    var parts = _line.Split(' ');
+                    //Log.Debug($"Found resolution {parts[0]} with RR {parts[1]}");
+                    var resolution = parts[0].Split('x');
+                    //var rr = parts[1].Split('*');
+                    if ( current.AvailableResolutions == null)
+                        current.AvailableResolutions = new (int, int)[0];
+                    if (current.AvailableRRs == null)
+                        current.AvailableRRs = new int[0];
+                    current.AvailableResolutions = current.AvailableResolutions.Append((int.Parse(resolution[0]), int.Parse(resolution[1]))).ToArray();
+                    current.AvailableRRs = current.AvailableRRs.Append(0).ToArray();
+                }
+                else
+                {
+                    if (current.Name != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(current.Name))
+                        {
+                            current.RR = current.AvailableRRs[0];
+                            displays.Add(current);
+                        }
+                    }
+                    current = new XrandrDisplay();
+                    var parts = line.Replace(" primary", "").Split(' ');
+                    current.Name = parts[0];
+                    if (parts.Length < 3 || string.IsNullOrWhiteSpace(current.Name))
+                        continue;
+                    
+                    current.On = !parts[1].Contains("disconnected");
+                    if (current.On)
+                    {
+                        Log.Debug($"Display {current.Name} is on");
+                        var resolution = parts[2].Split('x');
+                        //var rr = parts[3].Split('*');
+                        current.Width = int.Parse(resolution[0]);
+                        current.Height = int.Parse(resolution[1].Substring(0, resolution[1].IndexOf('+')));
+                        Log.Debug($"Display {current.Name} is {current.Width}x{current.Height}");
+                        // Log.Debug(rr[0]);
+                        // current.RR = int.Parse(rr[0]);
+                    }
+                }
+            }
+            if (current.Name != null)
+            {
+                if (!string.IsNullOrWhiteSpace(current.Name))
+                {
+                    current.RR = current.AvailableRRs[0];
+                    displays.Add(current);
+                }
+            }
+            return displays.ToArray();
         }
 
         private void LeftDragTitle(XMotionEvent ev)
@@ -624,7 +740,7 @@ namespace CursedWM
             // make sure the wmenu button is always at the top right of the window
             var wmenu = this.WindowIndexByFrame[frame].menubutton;
             Xlib.XMoveWindow(this.display, wmenu, (int)(new_width - 20), 0);
-            
+
         }
 
         void OnMapNotify(X11.XMapEvent ev)

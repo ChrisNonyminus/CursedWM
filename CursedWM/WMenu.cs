@@ -62,6 +62,7 @@ namespace CursedWM
             var menuGC = Xlib.XCreateGC(display, menu, 0, ref menuGCValues);
 
             var itemWindows = new List<Window>();
+            var itemDict = new Dictionary<Window, WMenuItem>();
 
             for (int i = 0; i < this.Items.Count; i++)
             {
@@ -79,6 +80,7 @@ namespace CursedWM
                 Xlib.XFlush(display);
 
                 itemWindows.Add(itemWindow);
+                itemDict.Add(itemWindow, item);
             }
 
             while (true)
@@ -88,11 +90,16 @@ namespace CursedWM
                 var xevent = Marshal.PtrToStructure<X11.XAnyEvent>(ev);
                 if (xevent.type == (int)Event.ButtonPress)
                 {
+
                     var buttonEvent = Marshal.PtrToStructure<X11.XButtonEvent>(ev);
                     if (!itemWindows.Contains(buttonEvent.window))
                         break;
-                    var itemIndex = (int)(buttonEvent.y / (menuHeight / this.Items.Count));
-                    var item = this.Items[itemIndex];
+                    var itemWindow = buttonEvent.window;
+                    Console.WriteLine("Button pressed at Y: " + buttonEvent.y);
+                    Console.WriteLine("Menu height: " + menuHeight);
+                    Console.WriteLine("Item count: " + this.Items.Count);
+
+                    var item = itemDict[itemWindow];
                     item.Action();
                     break;
                 }
